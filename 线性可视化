@@ -1,0 +1,95 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.io import loadmat
+
+raw_data = loadmat("data\\ex6data1.mat")
+
+data = pd.DataFrame(raw_data['X'], columns=['X1', 'X2'])
+data['y'] = raw_data['y']
+data.head()
+
+# 绘制图像
+# plt.scatter(data.X1, data.X2, c=data.y)
+# plt.show()
+
+# 用plot库绘制
+def plot_init_pic(data, fig, ax):
+    positive = data.loc[data['y'] == 1]
+    negative = data.loc[data['y'] == 0]
+
+    ax.scatter(positive['X1'], positive['X2'], s=50, marker='+', label='Positive')
+    ax.scatter(negative['X1'], negative['X2'], s=50, marker='o', label='Negative')
+
+fig, ax = plt.subplots(figsize=(12, 8))
+plot_init_pic(data, fig, ax)
+ax.set_xlabel('X1')
+ax.set_ylabel('X2')
+ax.legend()
+plt.show()
+
+# 组建网格然后将网格点带入决策边界函数，找出值近似为0的点就是边界点
+def find_decision_boundary(svc, x1min, x1max, x2min, x2max, diff):
+    x1 = np.linspace(x1min, x1max, 1000)
+    x2 = np.linspace(x2min, x2max, 1000)
+
+    coordinates = [(x, y) for x in x1 for y in x2]
+    x_cord, y_cord = zip(*coordinates)
+    c_val = pd.DataFrame({'x1': x_cord, 'x2': y_cord})
+    c_val['val'] = svc.decision_function(c_val[['x1', 'x2']])
+
+    decision = c_val[np.abs(c_val['val']) < diff]
+
+    return decision.x1, decision.x2
+
+from sklearn import svm
+
+# 配置LinearSVC参数,c=1
+svc = svm.LinearSVC(C=1, loss='hinge', max_iter=20000)
+# 将之前配置好的模型应用到数据集上
+svc.fit(data[['X1', 'X2']], data['y'])
+svc.score(data[['X1', 'X2']], data['y'])
+print(svc.score(data[['X1', 'X2']], data['y']))
+
+
+#可视化c=1时
+x1, x2 = find_decision_boundary(svc, 0, 5, 1.5, 5, 2 * 10**-3)
+
+fig, ax = plt.subplots(figsize=(12, 8))
+ax.scatter(x1, x2, s=1, c='r', label='Boundary')
+
+plot_init_pic(data, fig, ax)
+
+ax.set_title('SVM(C=1) Decition Boundary')
+ax.set_xlabel('X1')
+ax.set_ylabel('X2')
+ax.legend()
+plt.show()
+
+
+#c=400
+svc1 = svm.LinearSVC(C=400, loss='hinge', max_iter=200000)
+svc1.fit(data[['X1', 'X2']], data['y'])
+svc1.score(data[['X1', 'X2']], data['y'])
+print(svc1.score(data[['X1', 'X2']], data['y']))
+
+#可视化决策边界
+x1, x2 = find_decision_boundary(svc1, 0, 5, 1.5, 5, 8 * 10**-3)  # 这里调整了diff这个阈值，否则决策点连不成一条连续的线
+
+fig, ax = plt.subplots(figsize=(12, 8))
+ax.scatter(x1, x2, s=10, c='r', label='Boundary')
+
+plot_init_pic(data, fig, ax)
+
+ax.set_title('SVM(C=400) Decition Boundary')
+ax.set_xlabel('X1')
+ax.set_ylabel('X2')
+ax.legend()
+
+plt.show()
+
+
+
+
+
+
