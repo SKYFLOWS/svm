@@ -1,0 +1,63 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.io import loadmat
+
+
+# 用plot库绘制
+def plot_init_pic(data, fig, ax):
+    positive = data.loc[data['y'] == 1]
+    negative = data.loc[data['y'] == 0]
+
+    ax.scatter(positive['X1'], positive['X2'], s=50, marker='+', label='Positive')
+    ax.scatter(negative['X1'], negative['X2'], s=50, marker='o', label='Negative')
+
+
+from sklearn import svm
+raw_data = loadmat('data//ex6data2.mat')
+data = pd.DataFrame(raw_data['X'], columns=['X1', 'X2'])
+data['y'] = raw_data['y']
+
+fig, ax = plt.subplots(figsize=(12, 8))
+plot_init_pic(data, fig, ax)
+ax.set_xlabel('X1')
+ax.set_ylabel('X2')
+ax.legend()
+plt.show()
+
+svc2 = svm.SVC(C=100, gamma=100, probability=True)
+svc2.fit(data[['X1', 'X2']], data['y'])
+svc2.score(data[['X1', 'X2']], data['y'])
+print(svc2.score(data[['X1', 'X2']], data['y']))
+
+
+# 法二：利用等高线绘制决策边界
+def plot_decision_boundary(svc, x1min, x1max, x2min, x2max, ax):
+    #     x1 = np.arange(x1min, x1max, 0.001)
+    #     x2 = np.arange(x2min, x2max, 0.001)
+    x1 = np.linspace(x1min, x1max, 1000)
+    x2 = np.linspace(x2min, x2max, 1000)
+
+    x1, x2 = np.meshgrid(x1, x2)
+    y_pred = np.array([svc.predict(np.vstack((a, b)).T) for (a, b) in zip(x1, x2)])
+
+    ax.contour(x1, x2, y_pred, colors='r', linewidths=5)
+
+fig, ax = plt.subplots(figsize=(12, 8))
+
+plot_init_pic(data, fig, ax)
+plot_decision_boundary(svc2, 0, 1, 0.4, 1, ax)
+
+
+ax.set_title('SVM(gamma=0.1) Decition Boundary')
+ax.set_xlabel('X1')
+ax.set_ylabel('X2')
+ax.legend()
+plt.show()
+
+# 10秒
+
+
+
+
+
